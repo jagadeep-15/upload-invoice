@@ -1,39 +1,35 @@
-import streamlit as st
-import pandas as pd
-import json
+def main():
+    # Retrieve query parameters
+    query_params = st.experimental_get_query_params()
 
-# Set the Streamlit page configuration
-st.set_page_config(page_title="Invoice Upload", page_icon="🧾", layout="wide")
-
-# Upload file section
-uploaded_file = st.file_uploader("Upload your invoice", type=["pdf", "jpg", "png", "jpeg", "xls", "xlsx", "json"])
-
-# Create a placeholder for dynamic content
-placeholder = st.empty()
-
-if uploaded_file is not None:
-    # Clear previous content and display the new file content
-    placeholder.empty()  # Clears previous content in the placeholder
-    
-    # Process the file based on its type
-    if uploaded_file.type in ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]:
-        try:
-            df = pd.read_excel(uploaded_file)
-            st.write("### Detailed Invoice Data")
-            st.dataframe(df)
-        except ImportError:
-            st.error("Missing optional dependency 'openpyxl'. Please install it using `pip install openpyxl`.")
-    elif uploaded_file.type == "application/json":
-        try:
-            data = json.load(uploaded_file)
-            st.write("### JSON File Content")
-            st.json(data)
-        except json.JSONDecodeError:
-            st.error("Error decoding JSON file. Please upload a valid JSON file.")
+    # Determine which page to display based on query parameters
+    if "page" in query_params and query_params["page"][0] == "invoice_uploader":
+        if st.session_state.logged_in:
+            invoice_uploader()
+        else:
+            st.write("You need to log in first.")
+            login_form()
     else:
-        st.write("Uploaded file type is not supported. Please upload an Excel or JSON file.")
+        if not st.session_state.logged_in:
+            st.title("Welcome! Please log in or register to continue.")
 
-# Sidebar content
-st.sidebar.image("https://www.example.com/your-logo.png", use_column_width=True)
-st.sidebar.markdown("# Invoice Upload App")
-st.sidebar.markdown("Use this app to upload and view your invoices.")
+            # Sidebar branding (optional)
+            logo_path = r"C:\Users\SBAL036\Pictures\SBA LOGO.png"  # Use raw string for the file path
+            try:
+                st.sidebar.image(logo_path, use_column_width=True)
+            except Exception as e:
+                st.sidebar.write("Logo not found.")
+
+            st.sidebar.markdown("### SBA")
+
+            # Tabs for login and register
+            tab_login, tab_register = st.tabs(["Login", "Register"])
+
+            with tab_login:
+                login_form()
+
+            with tab_register:
+                register_form()
+        else:
+            # Use URL manipulation to handle redirection
+            st.experimental_set_query_params(page="invoice_uploader")
